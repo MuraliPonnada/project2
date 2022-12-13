@@ -225,24 +225,24 @@ void halt_writeback(cpu cpu) {
 ---------------------------------------------------------*/
 void registerAllOpcodes() {
 	// Invoke registerOpcode for EACH valid opcode here
-	registerOpcode_ALU(ADD,alu_fu,dss_decode,fwd_dispatch,fwd_execute,add_execute,dest_writeback);
-	registerOpcode_ALU(ADDL,alu_fu,dsi_decode,fwd_dispatch,fwd_execute,add_execute,dest_writeback);
-	registerOpcode_ALU(SUB,alu_fu,dss_decode,fwd_dispatch,fwd_execute,sub_execute,dest_writeback);
-	registerOpcode_ALU(SUBL,alu_fu,dsi_decode,fwd_dispatch,fwd_execute,sub_execute,dest_writeback);
+	registerOpcode(ADD,alu_fu,dss_decode,fwd_dispatch,fwd_execute,add_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(ADDL,alu_fu,dsi_decode,fwd_dispatch,fwd_execute,add_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(SUB,alu_fu,dss_decode,fwd_dispatch,fwd_execute,sub_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(SUBL,alu_fu,dsi_decode,fwd_dispatch,fwd_execute,sub_execute,fwd_execute,fwd_execute,dest_writeback);
 	registerOpcode(MUL,mult_fu,dss_decode,fwd_dispatch,fwd_execute,mul_execute,fwd_execute,fwd_execute,dest_writeback);
-	registerOpcode_ALU(AND,alu_fu,dss_decode,fwd_dispatch,fwd_execute,and_execute,dest_writeback);
-	registerOpcode_ALU(OR,alu_fu,dss_decode,fwd_dispatch,fwd_execute,or_execute,dest_writeback);
-	registerOpcode_ALU(XOR,alu_fu,dss_decode,fwd_dispatch,fwd_execute,xor_execute,dest_writeback);
-	registerOpcode_ALU(MOVC,alu_fu,movc_decode,fwd_dispatch,fwd_execute,movc_execute,dest_writeback);
+	registerOpcode(AND,alu_fu,dss_decode,fwd_dispatch,fwd_execute,and_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(OR,alu_fu,dss_decode,fwd_dispatch,fwd_execute,or_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(XOR,alu_fu,dss_decode,fwd_dispatch,fwd_execute,xor_execute,fwd_execute,fwd_execute,dest_writeback);
+	registerOpcode(MOVC,alu_fu,movc_decode,fwd_dispatch,fwd_execute,movc_execute,fwd_execute,fwd_execute,dest_writeback);
 	registerOpcode(LOAD,load_fu,dsi_decode,fwd_dispatch,fwd_execute,load_execute,load_memory,fwd_execute,dest_writeback);
 	registerOpcode(STORE,store_fu,ssi_decode,fwd_dispatch,fwd_execute,store_execute,store_memory,fwd_execute,fwd_execute);
-	registerOpcode_ALU(CMP,alu_fu,ssi_decode,fwd_dispatch,fwd_execute,cmp_execute,NULL);
+	registerOpcode(CMP,alu_fu,ssi_decode,fwd_dispatch,fwd_execute,cmp_execute,fwd_execute,fwd_execute,NULL);
 	registerOpcode(JUMP,br_fu,cbranch_decode,fwd_dispatch,fwd_execute,cbranch_execute,fwd_execute,fwd_execute,NULL);
 	registerOpcode(BZ,br_fu,cbranch_decode,fwd_dispatch,fwd_execute,cbranch_execute,fwd_execute,fwd_execute,NULL);
 	registerOpcode(BNZ,br_fu,cbranch_decode,fwd_dispatch,fwd_execute,cbranch_execute,fwd_execute,fwd_execute,NULL);
 	registerOpcode(BP,br_fu,cbranch_decode,fwd_dispatch,fwd_execute,cbranch_execute,fwd_execute,fwd_execute,NULL);
 	registerOpcode(BNP,br_fu,cbranch_decode,fwd_dispatch,fwd_execute,cbranch_execute,fwd_execute,fwd_execute,NULL);
-	registerOpcode_ALU(HALT,alu_fu,NULL,fwd_dispatch,fwd_execute,fwd_execute,halt_writeback);
+	registerOpcode(HALT,alu_fu,NULL,fwd_dispatch,fwd_execute,fwd_execute,fwd_execute,fwd_execute,halt_writeback);
 }
 
 void registerOpcode(int opNum,enum fu_enum fu,
@@ -256,17 +256,6 @@ void registerOpcode(int opNum,enum fu_enum fu,
 	opFns[fu][opNum]=executeFn1;
 	opFns[fu+1][opNum]=executeFn2;
 	opFns[fu+2][opNum]=executeFn3;
-	opFns[writeback][opNum]=writebackFn;
-}
-
-void registerOpcode_ALU(int opNum,enum fu_enum fu,
-	opStageFn decodeFn,opStageFn dispatchFn,opStageFn issueFn,opStageFn executeFn1,
-	opStageFn writebackFn) {
-
-	opFns[decode][opNum]=decodeFn;
-	opFns[dispatch][opNum]=dispatchFn;
-	opFns[issue][opNum]=issueFn;
-	opFns[fu][opNum]=executeFn1;
 	opFns[writeback][opNum]=writebackFn;
 }
 
@@ -388,9 +377,4 @@ void exForward(cpu cpu,enum stage_enum stage) {
 	cpu->fwdBus[0].tag=cpu->stage[stage].dr;
 	cpu->fwdBus[0].value=cpu->stage[stage].result;
 	cpu->fwdBus[0].valid=1;
-	if(stage == fu_alu1){
-		cpu->fwdBus[0].fwdtype=ONEFWD;
-		// cpu->fwdBus[1].valid=0;
-		// cpu->fwdBus[2].valid=0;
-	}
 }
