@@ -66,6 +66,11 @@ void registerOpcode(int opNum,enum fu_enum fu,
 	opStageFn decodeFn,opStageFn dispatchFn,opStageFn issueFn,opStageFn executeFn1,
 	opStageFn executeFn2,opStageFn executeFn3,
 	opStageFn writebackFn);
+
+void registerOpcode_ALU(int opNum,enum fu_enum fu,
+	opStageFn decodeFn,opStageFn dispatchFn,opStageFn issueFn,opStageFn executeFn1,
+	opStageFn writebackFn);
+	
 char * disassemble(int instruction,char *buf);
 int fetchRegister(cpu cpu,int reg,int *value);
 

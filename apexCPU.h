@@ -15,7 +15,7 @@ enum stage_enum {
 	decode,
 	dispatch,
 	issue,
-	fu_alu1,fu_alu2,fu_alu3,
+	fu_alu1,
 	fu_mul1,fu_mul2,fu_mul3,
 	fu_ld1,fu_ld2,fu_ld3,
 	fu_st1,fu_st2,fu_st3,
@@ -58,10 +58,17 @@ struct CC_struct {
 		int p;
 	};
 
+enum fwdBustype_enum{
+	ONEFWD,
+	TWOFWD,
+	THREEFWD
+};
+
 struct fwdBus_struct {
 	int tag;
 	int valid;
 	int value;
+	enum fwdBustype_enum fwdtype;
 };
 
 struct storevalue_struct{

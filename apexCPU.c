@@ -19,7 +19,7 @@ char * statusString(enum stageStatus_enum st);
    Global Variables
 ---------------------------------------------------------*/
 char *stageName[writeback+1]={"fetch","decode", "dispatch", "issue",
-	"alu1","alu2","alu3",
+	"alu1",
 	"mul1","mul2","mul3",
 	"load1","load2","load3",
 	"store1","store2","store3",
@@ -30,7 +30,7 @@ enum stage_enum pipeEnd[writeback+1]={
 	decode, // For fetch
 	decode, // For decode
 	dispatch, //For dispatch
-	fu_alu3, fu_alu3, fu_alu3, // for alu fu
+	fu_alu1, // for alu fu
 	fu_mul3, fu_mul3, fu_mul3, // for mul fu
 	fu_ld3, fu_ld3, fu_ld3, // for load fu
 	fu_st3, fu_st3, fu_st3, // for store fu
@@ -167,7 +167,7 @@ void cycleCPU(cpu cpu) {
 	// First, cycle stage data from FU to WB
 	// Resolve which FU forwards to WB (if any)
 	cpu->stage[writeback].status=stage_noAction;
-	for(enum stage_enum fu=fu_alu3; fu<=fu_br3 && cpu->stage[writeback].status==stage_noAction; fu+=3) {
+	for(enum stage_enum fu=fu_alu1; fu<=fu_br3 && cpu->stage[writeback].status==stage_noAction; fu+=3) {
 		if (cpu->stage[fu].status==stage_actionComplete || cpu->stage[fu].status==stage_ready) {
 			// printf("line 172 -> head=%d tail=%d\n",cpu->headtail[0],cpu->headtail[1]);
 			if(cpu->stage[fu].pc==cpu->rob[cpu->headtail[0]].pc){
@@ -189,7 +189,7 @@ void cycleCPU(cpu cpu) {
 
 
 	// Next, forward through FU pipelines..
-	for(enum fu_enum fs=alu_fu; fs<=br_fu; fs+=3) {
+	for(enum fu_enum fs=mult_fu; fs<=br_fu; fs+=3) {
 		if (cpu->stage[fs+2].status==stage_noAction ||
 				cpu->stage[fs+2].status==stage_squashed) {
 			cpu->stage[fs+2]=cpu->stage[fs+1];
@@ -290,6 +290,7 @@ void cycleCPU(cpu cpu) {
 		cpu->fwdBus[c]=cpu->fwdBus[c-1]; // Copy all fields forward
 	}
 	cpu->fwdBus[0].valid=0;
+	// printf("line 293 fu=%d stage=%d",cpu->stage[decode].fu);
 	// NOTE: fowarding bus conflicts due to different FU completion times!
 	//	Conflict always "won" by latest instruction in program order
 	//   Hence, if a bus is valid, it should not be overwritten by an
@@ -298,6 +299,14 @@ void cycleCPU(cpu cpu) {
 #ifdef TWOFWD
 	cpu->fwdBus[2].valid=0;
 #endif
+if(cpu->fwdBus[1].fwdtype==ONEFWD){
+	cpu->fwdBus[1].valid=0;
+	// cpu->fwdBus[2].valid=0;
+}
+if(cpu->fwdBus[2].fwdtype==ONEFWD){
+	cpu->fwdBus[2].valid=0;
+	// cpu->fwdBus[2].valid=0;
+}
 #ifdef ONEFWD
 	cpu->fwdBus[1].valid=0;
 	cpu->fwdBus[2].valid=0;
@@ -331,7 +340,7 @@ void cycleCPU(cpu cpu) {
 
 	cpu->t++; // update the clock tick - This cycle has completed
 	if (cpu->t==1) {
-		printf("      |ftch|deco|disp|issu|alu1|alu2|alu3|mul1|mul2|mul3|lod1|lod2|lod3|sto1|sto2|sto3|br1 |br2 |br3 | wb |\n");
+		printf("      |ftch|deco|disp|issu|alu1|mul1|mul2|mul3|lod1|lod2|lod3|sto1|sto2|sto3|br1 |br2 |br3 | wb |\n");
 	}
 
 	// Report on all stages (move this before cycling the rf part of decode to match Kanad's results)
@@ -516,6 +525,7 @@ void cycle_dispatch(cpu cpu) {
 			return;
 		}
 		// Operands are valid... issue to fu
+		// if(cpu->stage[fu])
 		cpu->stage[fu]=cpu->stage[issue];
 		cpu->stage[fu].status=stage_ready;
 		cpu->stage[fu].report[0]='\0';
